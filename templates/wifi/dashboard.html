@@ -39,7 +39,7 @@
             margin-bottom: 10px;
         }
 
-        . subtitle {
+        .subtitle {
             color: #666;
             font-size: 1.1em;
         }
@@ -135,7 +135,7 @@
             font-size: 1.2em;
         }
 
-        . error {
+        .error {
             background: #ff4444;
             color: white;
             padding: 15px;
@@ -159,7 +159,7 @@
             background: #ffaa00;
         }
 
-        . status-error {
+        .status-error {
             background:  #ff4444;
         }
 
@@ -251,9 +251,34 @@
                 height: 300px;
             }
         }
+
+        /* Bouton retour */
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration:  none;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+        }
     </style>
 </head>
 <body>
+    <!-- Bouton retour à l'accueil -->
+    <a href="/" class="back-button">← Retour à l'accueil</a>
+
     <div class="container">
         <header>
             <h1>📡 Monitoring WiFi</h1>
@@ -310,7 +335,7 @@
         let latencyChart, lossChart;
 
         function loadStats() {
-            fetch('/api/stats')
+            fetch('/wifi/api/stats')
                 .then(response => response.json())
                 .then(data => {
                     let html = '<div class="stats-grid">';
@@ -322,12 +347,12 @@
                         html += `
                             <div class="stat-card">
                                 <h3><span class="status-indicator ${statusClass}"></span>${host}</h3>
-                                <div class="stat-value">${stats. avg_latency}ms</div>
+                                <div class="stat-value">${stats.avg_latency}ms</div>
                                 <div class="stat-label">Latence moyenne</div>
                                 <hr style="margin: 15px 0; opacity: 0.3;">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap:  10px; font-size: 0.9em;">
                                     <div><strong>Uptime: </strong><br>${stats.uptime}%</div>
-                                    <div><strong>Pertes:</strong><br>${stats. avg_packet_loss}%</div>
+                                    <div><strong>Pertes:</strong><br>${stats.avg_packet_loss}%</div>
                                     <div><strong>Min:</strong><br>${stats.min_latency}ms</div>
                                     <div><strong>Max:</strong><br>${stats.max_latency}ms</div>
                                 </div>
@@ -348,8 +373,8 @@
         function loadHistory() {
             const hours = document.getElementById('time-period').value;
             
-            fetch(`/api/history/${hours}`)
-                .then(response => response. json())
+            fetch(`/wifi/api/history/${hours}`)
+                .then(response => response.json())
                 .then(history => {
                     renderCharts(history);
                 })
@@ -363,7 +388,7 @@
             
             history.forEach(entry => {
                 if (! hostData[entry.host]) {
-                    hostData[entry. host] = { labels: [], latencies: [], losses: [] };
+                    hostData[entry.host] = { labels: [], latencies: [], losses: [] };
                 }
                 // Format simplifié : HH:MM
                 const timestamp = entry.timestamp.substring(11, 16);
@@ -379,7 +404,7 @@
 
             // Détruire les anciens graphiques proprement
             if (latencyChart) {
-                latencyChart. destroy();
+                latencyChart.destroy();
                 latencyChart = null;
             }
             
@@ -390,13 +415,13 @@
                 label: host,
                 data: data.latencies,
                 borderColor: colors[host]?.border || 'rgb(153, 102, 255)',
-                backgroundColor: colors[host]?. bg || 'rgba(153, 102, 255, 0.1)',
+                backgroundColor: colors[host]?.bg || 'rgba(153, 102, 255, 0.1)',
                 tension: 0.4,
                 fill: true,
                 pointRadius: 2
             }));
 
-            latencyChart = new Chart(document. getElementById('latencyChart'), {
+            latencyChart = new Chart(document.getElementById('latencyChart'), {
                 type: 'line',
                 data: { 
                     labels: labels,
@@ -476,9 +501,9 @@
             const hours = document.getElementById('outage-period').value;
             const container = document.getElementById('outages-container');
             
-            container. innerHTML = '<p class="loading">Chargement...</p>';
+            container.innerHTML = '<p class="loading">Chargement...</p>';
             
-            fetch(`/api/outages/${hours}`)
+            fetch(`/wifi/api/outages/${hours}`)
                 .then(response => response.json())
                 .then(outages => {
                     if (outages.length === 0) {
@@ -514,7 +539,7 @@
                     container.innerHTML = html;
                 })
                 .catch(error => {
-                    console. error('Erreur:', error);
+                    console.error('Erreur:', error);
                     container.innerHTML = '<p class="error">❌ Erreur de chargement</p>';
                 });
         }

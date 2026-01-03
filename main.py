@@ -20,11 +20,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Monter les fichiers statiques
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
 # Inclure les routers des services
-app.include_router(wifi_router. router, prefix="/wifi", tags=["WiFi Monitor"])
+app.include_router(wifi_router.router, prefix="/wifi", tags=["WiFi Monitor"])
 app.include_router(monetariat_router.router, prefix="/monetariat", tags=["Monétariat"])
 
 @app.get("/", response_class=HTMLResponse)
