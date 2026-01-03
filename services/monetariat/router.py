@@ -3,106 +3,80 @@
 Routes FastAPI pour Monétariat
 """
 
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse
-from pydantic import BaseModel
-from datetime import date
-from typing import Optional
+from fastapi import APIRouter, Request
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from pathlib import Path
+from pydantic import BaseModel
+from typing import Optional
 
 from . import database as db
 
 # Configuration
 router = APIRouter()
 BASE_DIR = Path(__file__).parent.parent.parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 # Initialiser la DB au démarrage
 db.init_db()
 
-# Modèles
-class ExpenseCreate(BaseModel):
-    amount: float
-    category: str
-    necessity_level: str
-    expense_date: date
+# Models Pydantic
+class NewCategory(BaseModel):
+    nom: str
+    type: str
+
+class NewTransaction(BaseModel):
+    date: str
+    compte_id: int
+    montant: float
+    categorie_id: Optional[int] = None
     description: Optional[str] = None
-    payment_method: Optional[str] = None
+    necessite: Optional[str] = None
+    mode_paiement_id: Optional[int] = None
+    type: str
+    compte_destination_id: Optional[int] = None
 
 @router.get("/", response_class=HTMLResponse)
-async def monetariat_home():
-    """Page d'ajout de dépense"""
-    html_path = BASE_DIR / "templates" / "monetariat" / "form.html"
-    return FileResponse(html_path)
-
-@router.get("/dashboard", response_class=HTMLResponse)
-async def monetariat_dashboard():
-    """Dashboard des dépenses"""
+async def monetariat_dashboard(request: Request):
+    """Page principale du dashboard Monétariat"""
     html_path = BASE_DIR / "templates" / "monetariat" / "dashboard.html"
     return FileResponse(html_path)
 
-@router.post("/api/expenses")
-async def create_expense(expense: ExpenseCreate):
-    """Créer une dépense"""
-    conn = db.get_db_connection()
-    try:
-        cursor = conn.execute(
-            """INSERT INTO expenses 
-               (amount, category, necessity_level, expense_date, description, payment_method) 
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (expense.amount, expense.category, expense.necessity_level, 
-             str(expense.expense_date), expense.description, expense.payment_method)
+# API Routes
+@router.get("/api/accounts")
+async def api_get_accounts():
+    """Récupère tous les comptes"""
+    return db.get_all_accounts()
+
+@router.get("/api/categories/{cat_type}")
+async def api_get_categories(cat_type:  str):
+    """Récupère les catégories par type (depense/revenu)"""
+    return db.get_categories_by_type(cat_type)
+
+@router.get("/api/payment-methods")
+async def api_get_payment_methods():
+    """Récupère tous les modes de paiement"""
+    return db.get_all_payment_methods()
+
+@router.post("/api/categories")
+async def api_add_category(category: NewCategory):
+    """Ajoute une nouvelle catégorie"""
+    result = db.add_category(category.nom, category.type)
+    if result:
+        return result
+    else:
+        return JSONResponse(
+            status_code=400,
+            content={"error":  "Catégorie déjà existante"}
         )
-        conn.commit()
-        return {"success": True, "id": cursor.lastrowid}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        conn.close()
 
-@router.get("/api/expenses")
-async def get_expenses(limit: int = 100):
-    """Récupérer les dépenses"""
-    conn = db.get_db_connection()
-    cursor = conn.execute(
-        """SELECT * FROM expenses 
-           ORDER BY expense_date DESC, created_at DESC 
-           LIMIT ?""",
-        (limit,)
-    )
-    expenses = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return expenses
+@router.post("/api/transactions")
+async def api_add_transaction(transaction: NewTransaction):
+    """Ajoute une nouvelle transaction"""
+    transaction_id = db.add_transaction(transaction.dict())
+    return {"id": transaction_id, "status": "success"}
 
-@router.get("/api/expenses/stats")
-async def get_stats():
-    """Statistiques"""
-    conn = db.get_db_connection()
-    
-    # Par catégorie
-    cursor = conn.execute("""
-        SELECT category, SUM(amount) as total, COUNT(*) as count
-        FROM expenses 
-        GROUP BY category 
-        ORDER BY total DESC
-    """)
-    by_category = [dict(row) for row in cursor.fetchall()]
-    
-    # Total
-    cursor = conn.execute("SELECT COALESCE(SUM(amount), 0) as total FROM expenses")
-    total = cursor.fetchone()["total"]
-    
-    # Ce mois
-    cursor = conn.execute("""
-        SELECT COALESCE(SUM(amount), 0) as total 
-        FROM expenses 
-        WHERE strftime('%Y-%m', expense_date) = strftime('%Y-%m', 'now')
-    """)
-    this_month = cursor.fetchone()["total"]
-    
-    conn.close()
-    
-    return {
-        "by_category":  by_category,
-        "total": float(total),
-        "this_month": float(this_month)
-    }
+@router.get("/api/transactions")
+async def api_get_transactions(limit: int = 100):
+    """Récupère toutes les transactions"""
+    return db.get_all_transactions(limit)
