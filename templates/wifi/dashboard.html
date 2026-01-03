@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring WiFi - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius:  15px;
+            box-shadow:  0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        . subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius:  15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filters label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .filters select {
+            padding: 8px 15px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+            font-size:  14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filters select:hover {
+            border-color: #764ba2;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        . error {
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-ok {
+            background: #00cc66;
+        }
+
+        .status-warning {
+            background: #ffaa00;
+        }
+
+        . status-error {
+            background:  #ff4444;
+        }
+
+        .outage-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .outage-item {
+            background: #f8f9fa;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        
+        .outage-item.resolved {
+            border-left-color: #28a745;
+            background: #f1f8f4;
+        }
+        
+        .outage-item.ongoing {
+            border-left-color:  #ffc107;
+            background: #fff8e1;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .outage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .outage-host {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .outage-status {
+            padding: 4px 12px;
+            border-radius:  12px;
+            font-size:  0.85em;
+            font-weight:  bold;
+        }
+        
+        .outage-status.resolved {
+            background: #28a745;
+            color:  white;
+        }
+        
+        .outage-status.ongoing {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .outage-details {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .outage-duration {
+            font-weight: bold;
+            color: #dc3545;
+        }
+        
+        .no-outages {
+            text-align: center;
+            padding: 40px;
+            color: #28a745;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📡 Monitoring WiFi</h1>
+            <p class="subtitle">Surveillance en temps réel de votre connexion réseau</p>
+        </header>
+
+        <div class="card">
+            <h2>📊 Statistiques globales</h2>
+            <div id="stats-container">
+                <p class="loading">Chargement des statistiques...</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📈 Latence et perte de paquets</h2>
+            <div class="filters">
+                <label>Période :  
+                    <select id="time-period" onchange="loadHistory()">
+                        <option value="1">Dernière heure</option>
+                        <option value="6">6 dernières heures</option>
+                        <option value="24" selected>24 dernières heures</option>
+                        <option value="168">Dernière semaine</option>
+                        <option value="8760">Tout (1 an)</option>
+                    </select>
+                </label>
+            </div>
+            <div class="chart-container">
+                <canvas id="latencyChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="lossChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📉 Historique des pannes</h2>
+            <div class="filters">
+                <label>Période :  
+                    <select id="outage-period" onchange="loadOutages()">
+                        <option value="24">Dernières 24h</option>
+                        <option value="168">Dernière semaine</option>
+                        <option value="720">Dernier mois</option>
+                        <option value="8760">Tout (1 an)</option>
+                    </select>
+                </label>
+            </div>
+            <div id="outages-container">
+                <p class="loading">Chargement... </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let latencyChart, lossChart;
+
+        function loadStats() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    let html = '<div class="stats-grid">';
+                    
+                    for (const [host, stats] of Object.entries(data)) {
+                        const statusClass = stats.uptime >= 99 ? 'status-ok' : 
+                                          stats.uptime >= 95 ? 'status-warning' :  'status-error';
+                        
+                        html += `
+                            <div class="stat-card">
+                                <h3><span class="status-indicator ${statusClass}"></span>${host}</h3>
+                                <div class="stat-value">${stats. avg_latency}ms</div>
+                                <div class="stat-label">Latence moyenne</div>
+                                <hr style="margin: 15px 0; opacity: 0.3;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap:  10px; font-size: 0.9em;">
+                                    <div><strong>Uptime: </strong><br>${stats.uptime}%</div>
+                                    <div><strong>Pertes:</strong><br>${stats. avg_packet_loss}%</div>
+                                    <div><strong>Min:</strong><br>${stats.min_latency}ms</div>
+                                    <div><strong>Max:</strong><br>${stats.max_latency}ms</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                    document.getElementById('stats-container').innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    document.getElementById('stats-container').innerHTML = 
+                        '<p class="error">❌ Erreur de chargement des statistiques</p>';
+                });
+        }
+
+        function loadHistory() {
+            const hours = document.getElementById('time-period').value;
+            
+            fetch(`/api/history/${hours}`)
+                .then(response => response. json())
+                .then(history => {
+                    renderCharts(history);
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                });
+        }
+
+        function renderCharts(history) {
+            const hostData = {};
+            
+            history.forEach(entry => {
+                if (! hostData[entry.host]) {
+                    hostData[entry. host] = { labels: [], latencies: [], losses: [] };
+                }
+                // Format simplifié : HH:MM
+                const timestamp = entry.timestamp.substring(11, 16);
+                hostData[entry.host].labels.push(timestamp);
+                hostData[entry.host].latencies.push(entry.avg_latency);
+                hostData[entry.host].losses.push(entry.packet_loss);
+            });
+
+            const colors = {
+                '192.168.2.1': { border: 'rgb(75, 192, 192)', bg: 'rgba(75, 192, 192, 0.1)' },
+                '8.8.8.8': { border: 'rgb(255, 99, 132)', bg: 'rgba(255, 99, 132, 0.1)' }
+            };
+
+            // Détruire les anciens graphiques proprement
+            if (latencyChart) {
+                latencyChart. destroy();
+                latencyChart = null;
+            }
+            
+            // Utiliser les labels du premier hôte (ils sont synchronisés)
+            const labels = Object.values(hostData)[0]?.labels || [];
+            
+            const latencyDatasets = Object.entries(hostData).map(([host, data]) => ({
+                label: host,
+                data: data.latencies,
+                borderColor: colors[host]?.border || 'rgb(153, 102, 255)',
+                backgroundColor: colors[host]?. bg || 'rgba(153, 102, 255, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 2
+            }));
+
+            latencyChart = new Chart(document. getElementById('latencyChart'), {
+                type: 'line',
+                data: { 
+                    labels: labels,
+                    datasets: latencyDatasets 
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: true, text: 'Latence (ms)', font: { size: 16 } },
+                        legend: { display: true, position: 'top' }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text:  'Heure' },
+                            ticks: {
+                                maxTicksLimit: 12,
+                                autoSkip: true
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text:  'Latence (ms)' }
+                        }
+                    }
+                }
+            });
+
+            // Détruire l'ancien graphique de pertes
+            if (lossChart) {
+                lossChart.destroy();
+                lossChart = null;
+            }
+            
+            const lossDatasets = Object.entries(hostData).map(([host, data]) => ({
+                label: host,
+                data: data.losses,
+                borderColor: colors[host]?.border || 'rgb(255, 159, 64)',
+                backgroundColor:  colors[host]?.bg || 'rgba(255, 159, 64, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 2
+            }));
+
+            lossChart = new Chart(document.getElementById('lossChart'), {
+                type:  'line',
+                data:  { 
+                    labels: labels,
+                    datasets: lossDatasets 
+                },
+                options: {
+                    responsive:  true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: true, text: 'Perte de paquets (%)', font: { size: 16 } },
+                        legend: { display: true, position:  'top' }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Heure' },
+                            ticks: {
+                                maxTicksLimit: 12,
+                                autoSkip: true
+                            }
+                        },
+                        y: {
+                            beginAtZero:  true,
+                            max: 100,
+                            title: { display: true, text:  'Perte (%)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function loadOutages() {
+            const hours = document.getElementById('outage-period').value;
+            const container = document.getElementById('outages-container');
+            
+            container. innerHTML = '<p class="loading">Chargement...</p>';
+            
+            fetch(`/api/outages/${hours}`)
+                .then(response => response.json())
+                .then(outages => {
+                    if (outages.length === 0) {
+                        container.innerHTML = '<div class="no-outages">✅ Aucune panne détectée !  🎉</div>';
+                        return;
+                    }
+                    
+                    let html = '<ul class="outage-list">';
+                    
+                    outages.forEach(outage => {
+                        const statusClass = outage.status;
+                        const statusText = outage.status === 'ongoing' ? 'En cours' :  'Résolu';
+                        const durationText = outage.duration === 'En cours' ? 
+                            '<span class="outage-duration">⚠️ Panne en cours</span>' : 
+                            `<span class="outage-duration">Durée :  ${formatDuration(outage.duration_seconds)}</span>`;
+                        
+                        html += `
+                            <li class="outage-item ${statusClass}">
+                                <div class="outage-header">
+                                    <span class="outage-host">🔴 ${outage.host}</span>
+                                    <span class="outage-status ${statusClass}">${statusText}</span>
+                                </div>
+                                <div class="outage-details">
+                                    📅 Début : ${outage.start}<br>
+                                    ${outage.end !== 'En cours' ? `🏁 Fin : ${outage.end}<br>` : ''}
+                                    ${durationText}
+                                </div>
+                            </li>
+                        `;
+                    });
+                    
+                    html += '</ul>';
+                    container.innerHTML = html;
+                })
+                .catch(error => {
+                    console. error('Erreur:', error);
+                    container.innerHTML = '<p class="error">❌ Erreur de chargement</p>';
+                });
+        }
+        
+        function formatDuration(seconds) {
+            if (! seconds) return 'Unknown';
+            
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            if (hours > 0) {
+                return `${hours}h ${minutes}m ${secs}s`;
+            } else if (minutes > 0) {
+                return `${minutes}m ${secs}s`;
+            } else {
+                return `${secs}s`;
+            }
+        }
+
+        loadStats();
+        loadHistory();
+        loadOutages();
+
+        setInterval(() => {
+            loadStats();
+            loadHistory();
+            loadOutages();
+        }, 30000);
+    </script>
+</body>
+</html>

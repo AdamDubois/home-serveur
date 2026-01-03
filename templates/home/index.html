@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏠 Home Serveur</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 48px;
+            margin-bottom:  10px;
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .services {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .service-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            text-decoration: none;
+            color: #333;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+        
+        .service-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .service-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .service-description {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 Home Serveur</h1>
+            <p class="subtitle">Services personnels</p>
+        </header>
+
+        <div class="services">
+            <a href="/wifi" class="service-card">
+                <div class="service-icon">📡</div>
+                <div class="service-title">WiFi Monitor</div>
+                <div class="service-description">
+                    Surveillance du réseau et statistiques de latence
+                </div>
+            </a>
+
+            <a href="/monetariat" class="service-card">
+                <div class="service-icon">💰</div>
+                <div class="service-title">Monétariat</div>
+                <div class="service-description">
+                    Suivi des dépenses personnelles
+                </div>
+            </a>
+        </div>
+
+        <footer>
+            <p>Accessible via VPN WireGuard • Port 5000</p>
+        </footer>
+    </div>
+</body>
+</html>
