@@ -129,6 +129,104 @@ def get_history(hours=24):
     conn.close()
     return history
 
+def get_aggregated_history(hours=24, interval_minutes=60):
+    """
+    Récupère l'historique AGRÉGÉ par intervalle de temps
+    Pour optimiser l'affichage des graphiques sur de longues périodes
+    
+    Args:
+        hours:  Nombre d'heures à récupérer
+        interval_minutes: Intervalle d'agrégation en minutes
+    
+    Returns:
+        Liste de données agrégées (moyennes par intervalle)
+    """
+    conn = get_db_connection()
+    cutoff = datetime.now() - timedelta(hours=hours)
+    
+    # Conversion interval_minutes en format SQLite
+    # On arrondit les timestamps à l'intervalle le plus proche
+    cursor = conn.execute(f"""
+        SELECT 
+            datetime(
+                strftime('%s', timestamp) - (strftime('%s', timestamp) % ({interval_minutes} * 60)),
+                'unixepoch'
+            ) as time_bucket,
+            host,
+            AVG(avg_latency) as avg_latency,
+            AVG(packet_loss) as packet_loss,
+            AVG(CASE WHEN status = 'timeout' THEN 1 ELSE 0 END) as timeout_rate
+        FROM ping_stats
+        WHERE timestamp > ?
+        GROUP BY time_bucket, host
+        ORDER BY time_bucket ASC
+    """, (cutoff.strftime('%Y-%m-%d %H:%M:%S'),))
+    
+    history = []
+    for row in cursor.fetchall():
+        history.append({
+            'timestamp': row['time_bucket'],
+            'host': row['host'],
+            'avg_latency':  round(row['avg_latency'], 3) if row['avg_latency'] else 0,
+            'packet_loss': round(row['packet_loss'], 1) if row['packet_loss'] else 0,
+            'status': 'timeout' if row['timeout_rate'] > 0.5 else 'success'
+        })
+    
+    conn.close()
+    return history
+
+def get_custom_period_history(start_date, end_date, max_points=30):
+    """
+    Récupère l'historique pour une période personnalisée
+    Calcule automatiquement l'intervalle pour limiter à max_points
+    
+    Args:
+        start_date: Date de début (format:  'YYYY-MM-DD HH:MM:SS')
+        end_date: Date de fin (format: 'YYYY-MM-DD HH:MM:SS')
+        max_points:  Nombre maximum de points à retourner
+    
+    Returns: 
+        Liste de données agrégées
+    """
+    conn = get_db_connection()
+    
+    # Calculer la durée totale en minutes
+    start_dt = datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S')
+    end_dt = datetime.strptime(end_date, '%Y-%m-%d %H:%M:%S')
+    total_minutes = int((end_dt - start_dt).total_seconds() / 60)
+    
+    # Calculer l'intervalle pour avoir environ max_points
+    interval_minutes = max(1, total_minutes // max_points)
+    
+    cursor = conn.execute(f"""
+        SELECT 
+            datetime(
+                strftime('%s', timestamp) - (strftime('%s', timestamp) % ({interval_minutes} * 60)),
+                'unixepoch'
+            ) as time_bucket,
+            host,
+            AVG(avg_latency) as avg_latency,
+            AVG(packet_loss) as packet_loss,
+            AVG(CASE WHEN status = 'timeout' THEN 1 ELSE 0 END) as timeout_rate
+        FROM ping_stats
+        WHERE timestamp BETWEEN ? AND ?
+        GROUP BY time_bucket, host
+        ORDER BY time_bucket ASC
+    """, (start_date, end_date))
+    
+    history = []
+    for row in cursor.fetchall():
+        history.append({
+            'timestamp': row['time_bucket'],
+            'host': row['host'],
+            'avg_latency':  round(row['avg_latency'], 3) if row['avg_latency'] else 0,
+            'packet_loss': round(row['packet_loss'], 1) if row['packet_loss'] else 0,
+            'status': 'timeout' if row['timeout_rate'] > 0.5 else 'success'
+        })
+    
+    conn.close()
+    return history
+    
 def get_summary_stats(hours=24):
     """Récupère un résumé des statistiques"""
     conn = get_db_connection()
