@@ -113,7 +113,7 @@
             font-weight: 500;
         }
 
-        .filters select {
+        .filters select, .filters input[type="date"] {
             padding: 8px 15px;
             border: 2px solid #667eea;
             border-radius: 8px;
@@ -124,8 +124,12 @@
             transition: all 0.3s;
         }
 
-        .filters select:hover {
+        .filters select:hover, .filters input[type="date"]:hover {
             border-color: #764ba2;
+        }
+        
+        #custom-date-picker {
+            display: flex;
         }
 
         .loading {
@@ -296,14 +300,25 @@
             <h2>📈 Latence et perte de paquets</h2>
             <div class="filters">
                 <label>Période :  
-                    <select id="time-period" onchange="loadHistory()">
+                    <select id="time-period" onchange="handlePeriodChange()">
                         <option value="1">Dernière heure</option>
                         <option value="6">6 dernières heures</option>
                         <option value="24" selected>24 dernières heures</option>
                         <option value="168">Dernière semaine</option>
-                        <option value="8760">Tout (1 an)</option>
+                        <option value="720">Dernier mois (30j)</option>
+                        <option value="4320">6 derniers mois</option>
+                        <option value="8760">1 an</option>
+                        <option value="custom">Période personnalisée</option>
                     </select>
                 </label>
+                <div id="custom-date-picker" style="display: none; gap: 10px; align-items: center;">
+                    <label>Du : 
+                        <input type="date" id="start-date" onchange="loadCustomHistory()">
+                    </label>
+                    <label>Au : 
+                        <input type="date" id="end-date" onchange="loadCustomHistory()">
+                    </label>
+                </div>
             </div>
             <div class="chart-container">
                 <canvas id="latencyChart"></canvas>
@@ -370,28 +385,72 @@
                 });
         }
 
-        function loadHistory() {
-            const hours = document.getElementById('time-period').value;
+        function handlePeriodChange() {
+            const period = document.getElementById('time-period').value;
+            const datePicker = document.getElementById('custom-date-picker');
             
-            fetch(`/wifi/api/history/${hours}`)
+            if (period === 'custom') {
+                datePicker.style.display = 'flex';
+                // Ne pas charger tant que les dates ne sont pas sélectionnées
+            } else {
+                datePicker.style.display = 'none';
+                loadHistory();
+            }
+        }
+
+        function loadHistory() {
+            const period = document.getElementById('time-period').value;
+            
+            if (period === 'custom') {
+                return; // Ne rien faire, attendre la sélection des dates
+            }
+            
+            fetch(`/wifi/api/history/${period}`)
                 .then(response => response.json())
                 .then(history => {
-                    renderCharts(history);
+                    renderCharts(history, period);
                 })
                 .catch(error => {
                     console.error('Erreur:', error);
                 });
         }
 
-        function renderCharts(history) {
+        function loadCustomHistory() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            if (!startDate || !endDate) {
+                return; // Attendre que les deux dates soient sélectionnées
+            }
+            
+            fetch(`/wifi/api/history/custom?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(history => {
+                    renderCharts(history, 'custom');
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                });
+        }
+
+        function renderCharts(history, period) {
             const hostData = {};
+            
+            // Déterminer le format de date selon la période
+            let dateFormat;
+            if (period === '1' || period === '6') {
+                dateFormat = (ts) => ts.substring(11, 16); // HH:MM
+            } else if (period === '24' || period === '168') {
+                dateFormat = (ts) => ts.substring(5, 16); // MM-DD HH:MM
+            } else {
+                dateFormat = (ts) => ts.substring(0, 10); // YYYY-MM-DD
+            }
             
             history.forEach(entry => {
                 if (! hostData[entry.host]) {
                     hostData[entry.host] = { labels: [], latencies: [], losses: [] };
                 }
-                // Format simplifié : HH:MM
-                const timestamp = entry.timestamp.substring(11, 16);
+                const timestamp = dateFormat(entry.timestamp);
                 hostData[entry.host].labels.push(timestamp);
                 hostData[entry.host].latencies.push(entry.avg_latency);
                 hostData[entry.host].losses.push(entry.packet_loss);
@@ -418,7 +477,7 @@
                 backgroundColor: colors[host]?.bg || 'rgba(153, 102, 255, 0.1)',
                 tension: 0.4,
                 fill: true,
-                pointRadius: 2
+                pointRadius: labels.length > 50 ? 0 : 2 // Masquer les points si trop nombreux
             }));
 
             latencyChart = new Chart(document.getElementById('latencyChart'), {
@@ -436,15 +495,15 @@
                     },
                     scales: {
                         x: {
-                            title: { display: true, text:  'Heure' },
+                            title: { display: true, text: period === 'custom' ? 'Date' : 'Heure' },
                             ticks: {
-                                maxTicksLimit: 12,
+                                maxTicksLimit: 20,
                                 autoSkip: true
                             }
                         },
                         y: {
                             beginAtZero: true,
-                            title: { display: true, text:  'Latence (ms)' }
+                            title: { display: true, text: 'Latence (ms)' }
                         }
                     }
                 }
@@ -460,37 +519,37 @@
                 label: host,
                 data: data.losses,
                 borderColor: colors[host]?.border || 'rgb(255, 159, 64)',
-                backgroundColor:  colors[host]?.bg || 'rgba(255, 159, 64, 0.1)',
+                backgroundColor: colors[host]?.bg || 'rgba(255, 159, 64, 0.1)',
                 tension: 0.4,
                 fill: true,
-                pointRadius: 2
+                pointRadius: labels.length > 50 ? 0 : 2 // Masquer les points si trop nombreux
             }));
 
             lossChart = new Chart(document.getElementById('lossChart'), {
-                type:  'line',
-                data:  { 
+                type: 'line',
+                data: { 
                     labels: labels,
                     datasets: lossDatasets 
                 },
                 options: {
-                    responsive:  true,
+                    responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         title: { display: true, text: 'Perte de paquets (%)', font: { size: 16 } },
-                        legend: { display: true, position:  'top' }
+                        legend: { display: true, position: 'top' }
                     },
                     scales: {
                         x: {
-                            title: { display: true, text: 'Heure' },
+                            title: { display: true, text: period === 'custom' ? 'Date' : 'Heure' },
                             ticks: {
-                                maxTicksLimit: 12,
+                                maxTicksLimit: 20,
                                 autoSkip: true
                             }
                         },
                         y: {
-                            beginAtZero:  true,
+                            beginAtZero: true,
                             max: 100,
-                            title: { display: true, text:  'Perte (%)' }
+                            title: { display: true, text: 'Perte (%)' }
                         }
                     }
                 }
@@ -561,7 +620,7 @@
         }
 
         loadStats();
-        loadHistory();
+        loadHistory(); // Charge avec la période par défaut (24h)
         loadOutages();
 
         setInterval(() => {
