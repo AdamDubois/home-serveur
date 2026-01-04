@@ -51,8 +51,10 @@ async def login_page(request: Request):
     if auth.check_authentication(request):
         return RedirectResponse(url="/monetariat/", status_code=302)
     
-    html_path = BASE_DIR / "templates" / "monetariat" / "login.html"
-    return FileResponse(html_path)
+    return templates.TemplateResponse(
+        "monetariat/login.html",
+        {"request": request}
+    )
 
 @router.post("/login")
 async def login(request: Request, password: str = Form(...)):
@@ -63,10 +65,14 @@ async def login(request: Request, password: str = Form(...)):
         request.session["authenticated"] = True
         return RedirectResponse(url="/monetariat/", status_code=302)
     else:
-        # Mot de passe incorrect
-        return JSONResponse(
-            status_code=401,
-            content={"error": "Mot de passe incorrect"}
+        # Mot de passe incorrect - retourner la page de login avec erreur
+        return templates.TemplateResponse(
+            "monetariat/login.html",
+            {
+                "request": request,
+                "error": "Mot de passe incorrect"
+            },
+            status_code=401
         )
 
 @router.get("/logout")
@@ -78,32 +84,52 @@ async def logout(request: Request):
 # ============ PROTECTED ROUTES ============
 
 @router.get("/", response_class=HTMLResponse)
-async def monetariat_dashboard(request: Request, _: None = Depends(auth.require_authentication)):
+async def monetariat_dashboard(request: Request):
     """Dashboard principal - Vue d'ensemble"""
+    # Vérifier l'authentification et rediriger si nécessaire
+    if not auth.check_authentication(request):
+        return RedirectResponse(url="/monetariat/login", status_code=302)
+    
     html_path = BASE_DIR / "templates" / "monetariat" / "dashboard.html"
     return FileResponse(html_path)
 
 @router.get("/form", response_class=HTMLResponse)
-async def monetariat_form(request: Request, _: None = Depends(auth.require_authentication)):
+async def monetariat_form(request: Request):
     """Formulaire d'ajout de transaction"""
+    # Vérifier l'authentification et rediriger si nécessaire
+    if not auth.check_authentication(request):
+        return RedirectResponse(url="/monetariat/login", status_code=302)
+    
     html_path = BASE_DIR / "templates" / "monetariat" / "form.html"
     return FileResponse(html_path)
 
 @router.get("/settings", response_class=HTMLResponse)
-async def monetariat_settings(request: Request, _: None = Depends(auth.require_authentication)):
+async def monetariat_settings(request: Request):
     """Page de paramètres des comptes"""
+    # Vérifier l'authentification et rediriger si nécessaire
+    if not auth.check_authentication(request):
+        return RedirectResponse(url="/monetariat/login", status_code=302)
+    
     html_path = BASE_DIR / "templates" / "monetariat" / "settings.html"
     return FileResponse(html_path)
 
 @router.get("/import", response_class=HTMLResponse)
-async def monetariat_import(request: Request, _: None = Depends(auth.require_authentication)):
+async def monetariat_import(request: Request):
     """Page d'import CSV"""
+    # Vérifier l'authentification et rediriger si nécessaire
+    if not auth.check_authentication(request):
+        return RedirectResponse(url="/monetariat/login", status_code=302)
+    
     html_path = BASE_DIR / "templates" / "monetariat" / "import.html"
     return FileResponse(html_path)
 
 @router.get("/compte/{account_id}", response_class=HTMLResponse)
-async def monetariat_compte(request: Request, account_id: int, _: None = Depends(auth.require_authentication)):
+async def monetariat_compte(request: Request, account_id: int):
     """Page des transactions d'un compte"""
+    # Vérifier l'authentification et rediriger si nécessaire
+    if not auth.check_authentication(request):
+        return RedirectResponse(url="/monetariat/login", status_code=302)
+    
     html_path = BASE_DIR / "templates" / "monetariat" / "compte.html"
     return FileResponse(html_path)
 
