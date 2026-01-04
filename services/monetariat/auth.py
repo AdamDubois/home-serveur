@@ -3,6 +3,7 @@
 Service d'authentification pour Monétariat
 """
 
+import os
 from passlib.context import CryptContext
 from fastapi import Request, HTTPException, status
 from fastapi.responses import RedirectResponse
@@ -12,7 +13,11 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Mot de passe par défaut: admin123
 # Hash généré avec bcrypt
-DEFAULT_PASSWORD_HASH = "$2b$12$HPiI9EX3bPAB5n1GrjglRO1RfH095ybG2OEpiI2zB6S08RPdjHD92"
+# En production, définir MONETARIAT_PASSWORD_HASH dans les variables d'environnement
+DEFAULT_PASSWORD_HASH = os.getenv(
+    "MONETARIAT_PASSWORD_HASH",
+    "$2b$12$HPiI9EX3bPAB5n1GrjglRO1RfH095ybG2OEpiI2zB6S08RPdjHD92"  # admin123
+)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """

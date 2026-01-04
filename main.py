@@ -4,6 +4,7 @@ Application FastAPI centrale - Home Serveur
 Port 5000 - Accessible via VPN WireGuard
 """
 
+import os
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -22,8 +23,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Générer une clé secrète pour les sessions (à externaliser en production)
-SECRET_KEY = secrets.token_urlsafe(32)
+# Clé secrète pour les sessions
+# En production, définir SESSION_SECRET_KEY dans les variables d'environnement
+SECRET_KEY = os.getenv("SESSION_SECRET_KEY", secrets.token_urlsafe(32))
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 # Inclure les routers des services
