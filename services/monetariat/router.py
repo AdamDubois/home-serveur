@@ -51,8 +51,10 @@ async def login_page(request: Request):
     if auth.check_authentication(request):
         return RedirectResponse(url="/monetariat/", status_code=302)
     
-    html_path = BASE_DIR / "templates" / "monetariat" / "login.html"
-    return FileResponse(html_path)
+    return templates.TemplateResponse(
+        "monetariat/login.html",
+        {"request": request}
+    )
 
 @router.post("/login")
 async def login(request: Request, password: str = Form(...)):
