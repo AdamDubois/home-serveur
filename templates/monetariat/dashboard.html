@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Dashboard - Monétariat</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size:  1.2em;
+            opacity: 0.9;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content:  center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius:  10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn:hover {
+            background:  rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .account-card {
+            background: white;
+            padding: 25px;
+            border-radius:  15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        .account-card:hover {
+            transform:  translateY(-5px);
+        }
+
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .account-name {
+            font-size: 1.3em;
+            font-weight:  700;
+            color: #333;
+        }
+
+        .account-icon {
+            font-size: 2em;
+        }
+
+        .account-balance {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .balance-positive {
+            color: #28a745;
+        }
+
+        .balance-negative {
+            color: #dc3545;
+        }
+
+        .account-subtitle {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size:  2em;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius:  15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .chart-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .transactions-list {
+            background: white;
+            padding: 30px;
+            border-radius:  15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background 0.3s;
+        }
+
+        .transaction-item:hover {
+            background: #f8f9fa;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .transaction-icon {
+            font-size: 1.8em;
+        }
+
+        .transaction-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .transaction-description {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .transaction-meta {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .transaction-amount {
+            font-size: 1.3em;
+            font-weight:  700;
+        }
+
+        .amount-positive {
+            color: #28a745;
+        }
+
+        .amount-negative {
+            color:  #dc3545;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.5em;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Monétariat</h1>
+            <p>Tableau de bord financier</p>
+        </div>
+
+        <div class="nav-buttons">
+            <a href="/monetariat/form" class="nav-btn">➕ Nouvelle transaction</a>
+            <a href="/monetariat/import" class="nav-btn">📥 Importer CSV</a>
+            <a href="/monetariat/settings" class="nav-btn">⚙️ Paramètres</a>
+        </div>
+
+        <div id="loading" class="loading">
+            <div>⏳ Chargement des données...</div>
+        </div>
+
+        <div id="dashboard" style="display: none;">
+            <!-- Cartes des comptes -->
+            <div class="accounts-grid" id="accountsGrid"></div>
+
+            <!-- Statistiques du mois -->
+            <div class="stats-grid" id="statsGrid"></div>
+
+            <!-- Graphiques -->
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">📊 Dépenses par catégorie</div>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">📈 Évolution des soldes</div>
+                    <canvas id="balanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Liste des dernières transactions -->
+            <div class="transactions-list">
+                <div class="chart-title">🕐 Dernières transactions</div>
+                <div id="transactionsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+                let accounts = [];
+        let transactions = [];
+        let categories = [];
+
+        // Charger toutes les données
+        async function loadDashboard() {
+            try {
+                // Charger les comptes avec soldes
+                const accountsRes = await fetch('/monetariat/api/accounts/summary');
+                accounts = await accountsRes.json();
+
+                // Charger les transactions
+                const transactionsRes = await fetch('/monetariat/api/transactions? limit=100');
+                transactions = await transactionsRes.json();
+
+                // Charger les catégories
+                const categoriesDepenseRes = await fetch('/monetariat/api/categories/depense');
+                const categoriesRevenuRes = await fetch('/monetariat/api/categories/revenu');
+                const catDepense = await categoriesDepenseRes.json();
+                const catRevenu = await categoriesRevenuRes.json();
+                categories = [...catDepense, ...catRevenu];
+
+                // Afficher le dashboard
+                renderDashboard();
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                document.getElementById('loading').innerHTML = '<div style="color: #dc3545;">❌ Erreur de chargement</div>';
+            }
+        }
+
+        function renderDashboard() {
+            renderAccountCards();
+            renderStats();
+            renderCategoryChart();
+            renderBalanceChart();
+            renderTransactionsList();
+        }
+
+        function renderAccountCards() {
+            const container = document.getElementById('accountsGrid');
+            container.innerHTML = '';
+
+            accounts.forEach(account => {
+                const balanceClass = account.solde_reel >= 0 ? 'balance-positive' : 'balance-negative';
+                const icon = getAccountIcon(account.type);
+
+                const card = document.createElement('div');
+                card.className = 'account-card';
+                card.style.cursor = 'pointer';
+                card.onclick = () => {
+                    window.location.href = `/monetariat/compte/${account.id}`;
+                };
+                
+                card.innerHTML = `
+                    <div class="account-header">
+                        <div class="account-name">${account.nom}</div>
+                        <div class="account-icon">${icon}</div>
+                    </div>
+                    <div class="account-balance ${balanceClass}">
+                        ${formatMoney(account.solde_reel)}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderStats() {
+            const container = document.getElementById('statsGrid');
+            container.innerHTML = '';
+
+            // Calculer les stats du mois en cours
+            const now = new Date();
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+            const monthTransactions = transactions.filter(t => {
+                const tDate = new Date(t.date);
+                return tDate >= firstDayOfMonth && tDate <= lastDayOfMonth;
+            });
+
+            const totalDepenses = monthTransactions
+                .filter(t => t.type === 'depense')
+                .reduce((sum, t) => sum + t.montant, 0);
+
+            const totalRevenus = monthTransactions
+                .filter(t => t.type === 'revenu')
+                .reduce((sum, t) => sum + t.montant, 0);
+
+            const economies = totalRevenus - totalDepenses;
+
+            const stats = [
+                { icon: '💸', label: 'Dépenses du mois', value: totalDepenses, color: '#dc3545' },
+                { icon: '💰', label: 'Revenus du mois', value: totalRevenus, color: '#28a745' },
+                { icon: '💎', label: 'Économies', value: economies, color: economies >= 0 ? '#28a745' : '#dc3545' }
+            ];
+
+            stats.forEach(stat => {
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+                card.innerHTML = `
+                    <div class="stat-icon">${stat.icon}</div>
+                    <div class="stat-label">${stat.label}</div>
+                    <div class="stat-value" style="color: ${stat.color};">
+                        ${formatMoney(stat.value)}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderCategoryChart() {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+
+            // Calculer les dépenses par catégorie (mois en cours)
+            const now = new Date();
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            const depensesDuMois = transactions.filter(t => {
+                const tDate = new Date(t.date);
+                return t.type === 'depense' && tDate >= firstDayOfMonth;
+            });
+
+            // Grouper par catégorie
+            const categoryTotals = {};
+            depensesDuMois.forEach(t => {
+                const catName = t.categorie_nom || 'Sans catégorie';
+                categoryTotals[catName] = (categoryTotals[catName] || 0) + t.montant;
+            });
+
+            // Trier par montant décroissant
+            const sortedCategories = Object.entries(categoryTotals)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);  // Top 8 catégories
+
+            const labels = sortedCategories.map(c => c[0]);
+            const data = sortedCategories.map(c => c[1]);
+
+            const colors = [
+                '#667eea', '#764ba2', '#f093fb', '#4facfe',
+                '#43e97b', '#fa709a', '#fee140', '#30cfd0'
+            ];
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size:  12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value.toFixed(2)} $ (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderBalanceChart() {
+            const ctx = document.getElementById('balanceChart').getContext('2d');
+
+            // Calculer l'évolution sur les 30 derniers jours
+            const now = new Date();
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+            // Trier les transactions par date
+            const sortedTransactions = [...transactions]
+                .filter(t => new Date(t.date) >= thirtyDaysAgo)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Calculer les soldes quotidiens
+            const dailyBalances = {};
+            
+            // Initialiser avec les soldes initiaux
+            let currentBalances = {};
+            accounts.forEach(acc => {
+                currentBalances[acc.id] = acc.solde_initial;
+            });
+
+            // Parcourir les transactions et calculer les soldes
+            sortedTransactions.forEach(t => {
+                const dateKey = t.date;
+                
+                if (t.type === 'depense') {
+                    currentBalances[t.compte_id] -= t.montant;
+                } else if (t.type === 'revenu') {
+                    currentBalances[t.compte_id] += t.montant;
+                } else if (t.type === 'transfert') {
+                    currentBalances[t.compte_id] -= t.montant;
+                    currentBalances[t.compte_destination_id] += t.montant;
+                }
+
+                // Calculer le solde total
+                const totalBalance = Object.values(currentBalances).reduce((sum, val) => sum + val, 0);
+                dailyBalances[dateKey] = totalBalance;
+            });
+
+            const labels = Object.keys(dailyBalances).map(date => {
+                const d = new Date(date);
+                return `${d.getDate()}/${d.getMonth() + 1}`;
+            });
+
+            const data = Object.values(dailyBalances);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Solde total',
+                        data: data,
+                        borderColor: '#667eea',
+                        backgroundColor:  'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor:  '#fff',
+                        pointBorderWidth:  2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Solde: ${context.parsed.y.toFixed(2)} $`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(0) + ' $';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTransactionsList() {
+            const container = document.getElementById('transactionsList');
+            container.innerHTML = '';
+
+            // Prendre les 10 dernières transactions
+            const recentTransactions = transactions.slice(0, 10);
+
+            if (recentTransactions.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Aucune transaction</p>';
+                return;
+            }
+
+            recentTransactions.forEach(t => {
+                const item = document.createElement('div');
+                item.className = 'transaction-item';
+
+                const icon = getTransactionIcon(t.type);
+                const amountClass = t.type === 'depense' ? 'amount-negative' : 'amount-positive';
+                const sign = t.type === 'depense' ? '-' : '+';
+
+                const date = new Date(t.date);
+                const dateStr = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+
+                item.innerHTML = `
+                    <div class="transaction-left">
+                        <div class="transaction-icon">${icon}</div>
+                        <div class="transaction-details">
+                            <div class="transaction-description">
+                                ${t.description || t.categorie_nom || 'Transaction'}
+                            </div>
+                            <div class="transaction-meta">
+                                ${dateStr} • ${t.compte_nom} ${t.categorie_nom ?  `• ${t.categorie_nom}` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="transaction-amount ${amountClass}">
+                        ${sign}${t.montant.toFixed(2)} $
+                    </div>
+                `;
+
+                container.appendChild(item);
+            });
+        }
+
+        function getAccountIcon(type) {
+            const icons = {
+                'debit': '💳',
+                'epargne': '🏦',
+                'credit':  '💳'
+            };
+            return icons[type] || '💰';
+        }
+
+        function getTransactionIcon(type) {
+            const icons = {
+                'depense': '💸',
+                'revenu': '💰',
+                'transfert': '🔄'
+            };
+            return icons[type] || '💵';
+        }
+
+        function formatMoney(amount) {
+            const sign = amount >= 0 ? '' : '-';
+            const absAmount = Math.abs(amount);
+            return `${sign}${absAmount.toFixed(2)} $`;
+        }
+
+        // Charger le dashboard au démarrage
+        loadDashboard();
+    </script>
+</body>
+</html>

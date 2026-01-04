@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙️ Paramètres - Monétariat</title>
+    <style>
+        * {
+            margin: 0;
+            padding:  0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow:  0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align:  center;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration:  none;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .back-link:hover {
+            background:  rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+        }
+
+        .account-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .account-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .account-name {
+            font-size: 1.5em;
+            font-weight:  700;
+            color: #333;
+        }
+
+        .account-balance {
+            font-size:  1.8em;
+            font-weight: 700;
+        }
+
+        .balance-positive {
+            color: #28a745;
+        }
+
+        .balance-negative {
+            color: #dc3545;
+        }
+
+        .account-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .detail-item {
+            background: white;
+            padding: 12px;
+            border-radius:  8px;
+            border:  1px solid #e0e0e0;
+        }
+
+        .detail-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size:  14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding:  12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor:  pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color:  white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .edit-mode {
+            border-color: #667eea;
+            background: white;
+        }
+
+        .success-message {
+            background: #28a745;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align:  center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .error-message {
+            background: #dc3545;
+            color: white;
+            padding:  15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196f3;
+            padding:  15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box strong {
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <a href="/monetariat" class="back-link">← Retour au dashboard</a>
+
+    <div class="container">
+        <div class="success-message" id="successMessage">✅ Modifications enregistrées !</div>
+        <div class="error-message" id="errorMessage">❌ Erreur</div>
+
+        <div class="card">
+            <h1>⚙️ Paramètres des Comptes</h1>
+            <p class="subtitle">Gérez vos comptes et leurs soldes</p>
+
+            <div class="info-box">
+                <strong>ℹ️ Info :</strong> Le <strong>solde initial</strong> est le montant de départ. Le <strong>solde réel</strong> est calculé automatiquement en fonction de vos transactions.
+            </div>
+
+            <div id="accountsList"></div>
+        </div>
+    </div>
+
+    <script>
+        let accounts = [];
+
+        async function loadAccounts() {
+            try {
+                const res = await fetch('/monetariat/api/accounts/summary');
+                accounts = await res.json();
+                renderAccounts();
+            } catch (error) {
+                console.error('Erreur:', error);
+                showError('Impossible de charger les comptes');
+            }
+        }
+
+        function renderAccounts() {
+            const container = document.getElementById('accountsList');
+            container.innerHTML = '';
+
+            accounts.forEach(account => {
+                const balanceClass = account.solde_reel >= 0 ? 'balance-positive' : 'balance-negative';
+                
+                const accountDiv = document.createElement('div');
+                accountDiv.className = 'account-item';
+                accountDiv.id = `account-${account.id}`;
+
+                accountDiv.innerHTML = `
+                    <div class="account-header">
+                        <div class="account-name">${account.nom}</div>
+                        <div class="account-balance ${balanceClass}">
+                            ${formatMoney(account.solde_reel)}
+                        </div>
+                    </div>
+
+                    <div class="account-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Solde initial</div>
+                            <div class="detail-value">${formatMoney(account.solde_initial)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Type</div>
+                            <div class="detail-value">${getTypeLabel(account.type)}</div>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="editAccount(${account.id})">
+                            ✏️ Modifier
+                        </button>
+                    </div>
+
+                    <!-- Formulaire d'édition (caché par défaut) -->
+                    <div id="edit-form-${account.id}" style="display: none; margin-top: 20px;">
+                        <div class="form-group">
+                            <label>Nom du compte</label>
+                            <input type="text" id="name-${account.id}" value="${account.nom}">
+                        </div>
+                        <div class="form-group">
+                            <label>Solde initial ($)</label>
+                            <input type="number" step="0.01" id="balance-${account.id}" value="${account.solde_initial}">
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="saveAccount(${account.id})">
+                                💾 Sauvegarder
+                            </button>
+                            <button class="btn btn-secondary" onclick="cancelEdit(${account.id})">
+                                ❌ Annuler
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(accountDiv);
+            });
+        }
+
+        function editAccount(accountId) {
+            const accountDiv = document.getElementById(`account-${accountId}`);
+            const editForm = document.getElementById(`edit-form-${accountId}`);
+            
+            accountDiv.classList.add('edit-mode');
+            editForm.style.display = 'block';
+        }
+
+        function cancelEdit(accountId) {
+            const accountDiv = document.getElementById(`account-${accountId}`);
+            const editForm = document.getElementById(`edit-form-${accountId}`);
+            
+            accountDiv.classList.remove('edit-mode');
+            editForm.style.display = 'none';
+        }
+
+        async function saveAccount(accountId) {
+            const newName = document.getElementById(`name-${accountId}`).value.trim();
+            const newBalance = parseFloat(document.getElementById(`balance-${accountId}`).value);
+
+            if (! newName) {
+                showError('Le nom du compte ne peut pas être vide');
+                return;
+            }
+
+            try {
+                // Mettre à jour le nom
+                const nameRes = await fetch(`/monetariat/api/accounts/${accountId}/name`, {
+                    method: 'PUT',
+                    headers:  { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                });
+
+                if (!nameRes.ok) {
+                    const error = await nameRes.json();
+                    showError(error.error);
+                    return;
+                }
+
+                // Mettre à jour le solde
+                const balanceRes = await fetch(`/monetariat/api/accounts/${accountId}/balance`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type':  'application/json' },
+                    body: JSON.stringify({ balance: newBalance })
+                });
+
+                if (!balanceRes.ok) {
+                    const error = await balanceRes.json();
+                    showError(error.error);
+                    return;
+                }
+
+                showSuccess();
+                cancelEdit(accountId);
+                await loadAccounts();
+            } catch (error) {
+                console.error('Erreur:', error);
+                showError('Impossible de sauvegarder les modifications');
+            }
+        }
+
+        function formatMoney(amount) {
+            const sign = amount >= 0 ?  '' : '-';
+            const absAmount = Math.abs(amount);
+            return `${sign}${absAmount.toFixed(2)} $`;
+        }
+
+        function getTypeLabel(type) {
+            const labels = {
+                'debit': '💳 Débit',
+                'epargne': '🏦 Épargne',
+                'credit': '💳 Crédit'
+            };
+            return labels[type] || type;
+        }
+
+        function showSuccess() {
+            const msg = document.getElementById('successMessage');
+            msg.style.display = 'block';
+            window.scrollTo(0, 0);
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 3000);
+        }
+
+        function showError(text) {
+            const msg = document.getElementById('errorMessage');
+            msg.textContent = '❌ ' + text;
+            msg.style.display = 'block';
+            window.scrollTo(0, 0);
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 5000);
+        }
+
+        // Charger les comptes au démarrage
+        loadAccounts();
+    </script>
+</body>
+</html>

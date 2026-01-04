@@ -3,148 +3,942 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💰 Monétariat</title>
+    <title>💰 Nouvelle Transaction - Monétariat</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 50px auto;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
-            background: #f5f5f5;
         }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow:  0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
         h1 {
+            color:  #333;
+            margin-bottom: 30px;
             text-align: center;
+            font-size: 2em;
         }
+
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
+
         label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+            display:  block;
+            margin-bottom:  8px;
+            color: #333;
+            font-weight: 600;
         }
+
         input, select, textarea {
             width:  100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
         }
-        button {
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .type-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .type-btn {
+            padding:  15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .type-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .type-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .inline-add-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .inline-add-container select {
+            flex: 1;
+        }
+
+        .add-btn {
+            padding: 12px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: background 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #218838;
+        }
+
+        .submit-btn {
             width: 100%;
-            padding:  12px;
+            padding:  15px;
             background:  #667eea;
             color: white;
             border: none;
-            border-radius: 4px;
-            font-size: 16px;
+            border-radius: 10px;
+            font-size:  18px;
+            font-weight:  600;
             cursor: pointer;
+            transition: all 0.3s;
         }
-        button:hover {
+
+        .submit-btn:hover {
             background: #5568d3;
+            transform: translateY(-2px);
         }
+
         .back-link {
             position: fixed;
             top: 20px;
             left: 20px;
-            background: rgba(102, 126, 234, 0.9);
+            background: rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 12px 24px;
-            border-radius:  12px;
+            padding: 10px 20px;
+            border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
             backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
             z-index: 1000;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
-        
+
         .back-link:hover {
-            background: rgba(102, 126, 234, 1);
+            background: rgba(255, 255, 255, 0.3);
             transform: translateX(-5px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .success-message {
+            background: #28a745;
+            color: white;
+            padding: 15px;
+            border-radius:  8px;
+            margin-bottom:  20px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .error-message {
+            background: #dc3545;
+            color:  white;
+            padding: 15px;
+            border-radius:  8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .required {
+            color: #dc3545;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 5px;
+            margin-top:  10px;
+        }
+
+        .manage-btn {
+            padding: 8px 15px;
+            background:  #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .manage-btn:hover {
+            background: #5a6268;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius:  15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y:  auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: white;
+            cursor: move;
+            transition: all 0.3s;
+        }
+
+        .category-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .category-item.dragging {
+            opacity: 0.5;
+            border-color: #667eea;
+        }
+
+        .category-item-name {
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .drag-handle {
+            color: #999;
+            font-size: 18px;
+        }
+
+        .delete-cat-btn {
+            padding: 6px 12px;
+            background: #dc3545;
+            color: white;
+            border:  none;
+            border-radius:  6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .delete-cat-btn:hover {
+            background: #c82333;
+        }
+
+        .save-order-btn {
+            width: 100%;
+            padding:  12px;
+            background:  #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+
+        .save-order-btn:hover {
+            background: #218838;
         }
     </style>
 </head>
 <body>
-    <a href="/" class="back-link">← Retour à l'accueil</a>
-    <h1>💰 Ajouter une dépense</h1>
-    <form id="expenseForm">
-        <div class="form-group">
-            <label>Montant ($)</label>
-            <input type="number" id="amount" step="0.01" required>
+    <a href="/monetariat" class="back-link">← Retour au dashboard</a>
+
+    <div class="container">
+        <div class="success-message" id="successMessage">✅ Transaction enregistrée avec succès !</div>
+        <div class="error-message" id="errorMessage">❌ Erreur lors de l'enregistrement</div>
+
+        <div class="card">
+            <h1>💰 Nouvelle Transaction</h1>
+
+            <form id="transactionForm">
+                <!-- Sélecteur de type -->
+                <div class="type-selector">
+                    <button type="button" class="type-btn active" data-type="depense">
+                        💸 Dépense
+                    </button>
+                    <button type="button" class="type-btn" data-type="revenu">
+                        💰 Revenu
+                    </button>
+                    <button type="button" class="type-btn" data-type="transfert">
+                        🔄 Transfert
+                    </button>
+                </div>
+
+                <input type="hidden" id="transactionType" value="depense">
+
+                <!-- Date -->
+                <div class="form-group">
+                    <label>Date <span class="required">*</span></label>
+                    <input type="date" id="date" required>
+                </div>
+
+                <!-- Compte source -->
+                <div class="form-group">
+                    <label id="compteLabel">Compte source <span class="required">*</span></label>
+                    <select id="compte" required></select>
+                </div>
+
+                <!-- Compte destination (transfert uniquement) -->
+                <div class="form-group hidden" id="compteDestinationGroup">
+                    <label>Vers (compte destination) <span class="required">*</span></label>
+                    <select id="compteDestination"></select>
+                </div>
+
+                <!-- Montant -->
+                <div class="form-group">
+                    <label>Montant ($) <span class="required">*</span></label>
+                    <input type="number" id="montant" step="0.01" min="0.01" required>
+                </div>
+
+                <!-- Catégorie (pas pour transfert) -->
+                <div class="form-group" id="categorieGroup">
+                    <label>Catégorie <span class="required">*</span></label>
+                    <div class="inline-add-container">
+                        <select id="categorie" required></select>
+                        <button type="button" class="add-btn" onclick="addNewCategory()">+ Ajouter</button>
+                    </div>
+                    <div class="category-actions">
+                        <button type="button" class="manage-btn" onclick="openManageCategoriesModal()">✏️ Gérer les catégories</button>
+                    </div>
+                </div>
+
+                <!-- Abonnement (si catégorie = Abonnement) -->
+                <div class="form-group hidden" id="abonnementGroup">
+                    <label>Quel abonnement ? <span class="required">*</span></label>
+                    <div class="inline-add-container">
+                        <select id="abonnement"></select>
+                        <button type="button" class="add-btn" onclick="addNewSubscription()">+ Ajouter</button>
+                    </div>
+                </div>
+
+                <!-- Mode de paiement -->
+                <div class="form-group">
+                    <label>Mode de paiement <span class="required">*</span></label>
+                    <select id="modePaiement" required></select>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="description" placeholder="Ex: Épicerie Metro">
+                </div>
+
+                <!-- Niveau de nécessité (dépense uniquement) -->
+                <div class="form-group" id="necessityLevelGroup">
+                    <label>Niveau de nécessité <span class="required">*</span></label>
+                    <select id="necessityLevel" required>
+                        <option value="Obligatoire">Obligatoire</option>
+                        <option value="Important">Important</option>
+                        <option value="Neutre" selected>Neutre</option>
+                        <option value="Peu Important">Peu Important</option>
+                        <option value="Plaisir">Plaisir</option>
+                    </select>
+                </div>
+
+                <!-- Explication de nécessité (dépense uniquement, optionnel) -->
+                <div class="form-group" id="necessiteGroup">
+                    <label>Explication de nécessité (optionnel)</label>
+                    <textarea id="necessite" rows="3" placeholder="Expliquer la raison de cette dépense"></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">💾 Enregistrer la transaction</button>
+            </form>
         </div>
-        <div class="form-group">
-            <label>Catégorie</label>
-            <select id="category" required>
-                <option value="Alimentation">🍔 Alimentation</option>
-                <option value="Transport">🚗 Transport</option>
-                <option value="Logement">🏠 Logement</option>
-                <option value="Loisirs">🎮 Loisirs</option>
-                <option value="Autre">✨ Autre</option>
-            </select>
+
+        <!-- Modal de gestion des catégories -->
+        <div id="manageCategoriesModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🗂️ Gérer les catégories</h2>
+                    <button class="close-btn" onclick="closeManageCategoriesModal()">&times;</button>
+                </div>
+                <p style="color: #666; margin-bottom:  20px;">Glissez-déposez pour réordonner. Cliquez sur "Supprimer" pour retirer une catégorie.</p>
+                <div id="categoryList"></div>
+                <button class="save-order-btn" onclick="saveCategoryOrder()">💾 Sauvegarder l'ordre</button>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Nécessité</label>
-            <select id="necessity" required>
-                <option value="Essentiel">Essentiel</option>
-                <option value="Important">Important</option>
-                <option value="Optionnel">Optionnel</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Date</label>
-            <input type="date" id="date" required>
-        </div>
-        <div class="form-group">
-            <label>Moyen de paiement</label>
-            <select id="payment">
-                <option value="Carte">💳 Carte</option>
-                <option value="Comptant">💵 Comptant</option>
-                <option value="Virement">🏦 Virement</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Description (optionnel)</label>
-            <textarea id="description" rows="3"></textarea>
-        </div>
-        <button type="submit">💾 Enregistrer</button>
-    </form>
+    </div>
 
     <script>
-        // Date du jour par défaut
-        document.getElementById('date').valueAsDate = new Date();
+        let accounts = [];
+        let paymentMethods = [];
+        let subscriptions = [];
+        let currentType = 'depense';
+        let currentCategories = [];
 
-        document.getElementById('expenseForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // ============ GESTION DES CATÉGORIES (SUPPRIMER + RÉORDONNER) ============
+        
+        let draggedElement = null;
 
-            const expense = {
-                amount: parseFloat(document.getElementById('amount').value),
-                category: document.getElementById('category').value,
-                necessity_level: document.getElementById('necessity').value,
-                expense_date: document.getElementById('date').value,
-                payment_method: document.getElementById('payment').value,
-                description: document.getElementById('description').value || null
-            };
+        function openManageCategoriesModal() {
+            document.getElementById('manageCategoriesModal').classList.add('active');
+            renderCategoryList();
+        }
+
+        function closeManageCategoriesModal() {
+            document.getElementById('manageCategoriesModal').classList.remove('active');
+        }
+
+        function renderCategoryList() {
+            const listDiv = document.getElementById('categoryList');
+            listDiv.innerHTML = '';
+
+            currentCategories.forEach((cat, index) => {
+                const item = document.createElement('div');
+                item.className = 'category-item';
+                item.draggable = true;
+                item.dataset.categoryId = cat.id;
+                item.dataset.index = index;
+
+                item.innerHTML = `
+                    <div class="category-item-name">
+                        <span class="drag-handle">☰</span>
+                        <span>${cat.nom}</span>
+                    </div>
+                    <button class="delete-cat-btn" onclick="deleteCategory(${cat.id}, '${cat.nom}')">
+                        🗑️ Supprimer
+                    </button>
+                `;
+
+                // Événements drag & drop
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragend', handleDragEnd);
+
+                listDiv.appendChild(item);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            
+            const afterElement = getDragAfterElement(this.parentElement, e.clientY);
+            if (afterElement == null) {
+                this.parentElement.appendChild(draggedElement);
+            } else {
+                this.parentElement.insertBefore(draggedElement, afterElement);
+            }
+            
+            return false;
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            
+            // Mettre à jour l'ordre dans le tableau currentCategories
+            const items = document.querySelectorAll('.category-item');
+            const newOrder = [];
+            items.forEach((item, index) => {
+                const catId = parseInt(item.dataset.categoryId);
+                const cat = currentCategories.find(c => c.id === catId);
+                if (cat) {
+                    newOrder.push(cat);
+                }
+            });
+            currentCategories = newOrder;
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.category-item:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        async function saveCategoryOrder() {
+            const orders = currentCategories.map((cat, index) => ({
+                id: cat.id,
+                ordre: index
+            }));
 
             try {
-                const response = await fetch('/monetariat/api/expenses', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(expense)
+                const res = await fetch('/monetariat/api/categories/reorder', {
+                    method: 'PUT',
+                    headers:  { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orders })
                 });
 
-                if (response.ok) {
-                    alert('✅ Dépense enregistrée ! ');
-                    document.getElementById('expenseForm').reset();
-                    document.getElementById('date').valueAsDate = new Date();
+                if (res.ok) {
+                    alert('✅ Ordre sauvegardé ! ');
+                    await loadCategories(currentType);
+                    closeManageCategoriesModal();
                 } else {
-                    alert('❌ Erreur lors de l\'enregistrement');
+                    alert('❌ Erreur lors de la sauvegarde');
                 }
             } catch (error) {
-                alert('❌ Impossible de se connecter au serveur');
+                console.error('Erreur:', error);
+                alert('❌ Impossible de sauvegarder l\'ordre');
+            }
+        }
+
+        async function deleteCategory(catId, catName) {
+            if (! confirm(`Voulez-vous vraiment supprimer la catégorie "${catName}" ?\n\nAttention :  Impossible si des transactions l'utilisent.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/monetariat/api/categories/${catId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    alert('✅ Catégorie supprimée ! ');
+                    await loadCategories(currentType);
+                    renderCategoryList();
+                } else {
+                    alert('❌ ' + result.error);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Impossible de supprimer la catégorie');
+            }
+        }
+
+        // ============ FIN GESTION DES CATÉGORIES ============
+
+        // Charger les données au démarrage
+        async function loadData() {
+            try {
+                // Charger les comptes
+                const accountsRes = await fetch('/monetariat/api/accounts');
+                accounts = await accountsRes.json();
+                populateAccounts();
+
+                // Charger les modes de paiement
+                const methodsRes = await fetch('/monetariat/api/payment-methods');
+                paymentMethods = await methodsRes.json();
+                populatePaymentMethods();
+
+                // Charger les abonnements
+                const subsRes = await fetch('/monetariat/api/subscriptions');
+                subscriptions = await subsRes.json();
+                populateSubscriptions();
+
+                // Charger les catégories de dépenses par défaut
+                await loadCategories('depense');
+
+                // Date du jour par défaut
+                document.getElementById('date').valueAsDate = new Date();
+            } catch (error) {
+                console.error('Erreur chargement:', error);
+                showError('Impossible de charger les données');
+            }
+        }
+
+        function populateAccounts() {
+            const compteSelect = document.getElementById('compte');
+            const compteDestSelect = document.getElementById('compteDestination');
+            
+            compteSelect.innerHTML = '';
+            compteDestSelect.innerHTML = '';
+            
+            accounts.forEach(account => {
+                // Pour le compte source en mode dépense :  exclure Épargne
+                if (currentType === 'depense' && account.nom === 'Épargne') {
+                    // Ne pas ajouter
+                } else {
+                    const option1 = new Option(account.nom, account.id);
+                    compteSelect.add(option1);
+                }
+                
+                // Pour le compte destination (toujours tous les comptes)
+                const option2 = new Option(account.nom, account.id);
+                compteDestSelect.add(option2);
+            });
+        }
+
+        function populatePaymentMethods() {
+            const select = document.getElementById('modePaiement');
+            select.innerHTML = '';
+            
+            paymentMethods.forEach(method => {
+                const option = new Option(method.nom, method.id);
+                select.add(option);
+            });
+        }
+
+        function populateSubscriptions() {
+            const select = document.getElementById('abonnement');
+            select.innerHTML = '';
+            
+            subscriptions.forEach(sub => {
+                const option = new Option(sub.nom, sub.id);
+                select.add(option);
+            });
+        }
+
+        async function loadCategories(type) {
+            try {
+                const res = await fetch(`/monetariat/api/categories/${type}`);
+                currentCategories = await res.json();
+                
+                const select = document.getElementById('categorie');
+                select.innerHTML = '';
+                
+                currentCategories.forEach(cat => {
+                    const option = new Option(cat.nom, cat.id);
+                    select.add(option);
+                });
+
+                // Vérifier si la catégorie "Abonnement" est sélectionnée
+                checkAbonnementCategory();
+            } catch (error) {
+                console.error('Erreur chargement catégories:', error);
+            }
+        }
+
+        // Vérifier si la catégorie Abonnement est sélectionnée
+        function checkAbonnementCategory() {
+            const categorieSelect = document.getElementById('categorie');
+            const selectedText = categorieSelect.options[categorieSelect.selectedIndex]?.text;
+            const abonnementGroup = document.getElementById('abonnementGroup');
+            const abonnementSelect = document.getElementById('abonnement');
+
+            if (selectedText === 'Abonnement') {
+                abonnementGroup.classList.remove('hidden');
+                abonnementSelect.required = true;
+            } else {
+                abonnementGroup.classList.add('hidden');
+                abonnementSelect.required = false;
+            }
+        }
+
+        // Écouter les changements de catégorie
+        document.addEventListener('DOMContentLoaded', () => {
+            const categorieSelect = document.getElementById('categorie');
+            categorieSelect.addEventListener('change', checkAbonnementCategory);
+        });
+
+        // Gestion des boutons de type
+        document.querySelectorAll('.type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                currentType = this.dataset.type;
+                document.getElementById('transactionType').value = currentType;
+                
+                updateFormForType(currentType);
+            });
+        });
+
+        function updateFormForType(type) {
+            const categorieGroup = document.getElementById('categorieGroup');
+            const necessiteGroup = document.getElementById('necessiteGroup');
+            const necessityLevelGroup = document.getElementById('necessityLevelGroup');
+            const abonnementGroup = document.getElementById('abonnementGroup');
+            const compteDestGroup = document.getElementById('compteDestinationGroup');
+            const compteLabel = document.getElementById('compteLabel');
+
+            if (type === 'depense') {
+                categorieGroup.classList.remove('hidden');
+                necessiteGroup.classList.remove('hidden');
+                necessityLevelGroup.classList.remove('hidden');
+                compteDestGroup.classList.add('hidden');
+                abonnementGroup.classList.add('hidden');
+                compteLabel.textContent = 'Compte source';
+                document.getElementById('categorie').required = true;
+                document.getElementById('necessityLevel').required = true;
+                document.getElementById('compteDestination').required = false;
+                document.getElementById('abonnement').required = false;
+                loadCategories('depense');
+                populateAccounts(); // Recharger pour exclure Épargne
+            } else if (type === 'revenu') {
+                categorieGroup.classList.remove('hidden');
+                necessiteGroup.classList.add('hidden');
+                necessityLevelGroup.classList.add('hidden');
+                compteDestGroup.classList.add('hidden');
+                abonnementGroup.classList.add('hidden');
+                compteLabel.textContent = 'Compte destination';
+                document.getElementById('categorie').required = true;
+                document.getElementById('necessityLevel').required = false;
+                document.getElementById('compteDestination').required = false;
+                document.getElementById('abonnement').required = false;
+                loadCategories('revenu');
+                populateAccounts(); // Recharger tous les comptes
+            } else if (type === 'transfert') {
+                categorieGroup.classList.add('hidden');
+                necessiteGroup.classList.add('hidden');
+                necessityLevelGroup.classList.add('hidden');
+                compteDestGroup.classList.remove('hidden');
+                abonnementGroup.classList.add('hidden');
+                compteLabel.textContent = 'De (compte source)';
+                document.getElementById('categorie').required = false;
+                document.getElementById('necessityLevel').required = false;
+                document.getElementById('compteDestination').required = true;
+                document.getElementById('abonnement').required = false;
+                populateAccounts(); // Recharger tous les comptes
+            }
+        }
+
+        async function addNewCategory() {
+            const categoryName = prompt('Nom de la nouvelle catégorie : ');
+            if (!categoryName || categoryName.trim() === '') return;
+
+            try {
+                const res = await fetch('/monetariat/api/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nom: categoryName.trim(),
+                        type: currentType
+                    })
+                });
+
+                if (res.ok) {
+                    const newCat = await res.json();
+                    await loadCategories(currentType);
+                    // Sélectionner la nouvelle catégorie
+                    document.getElementById('categorie').value = newCat.id;
+                    checkAbonnementCategory();
+                } else {
+                    const error = await res.json();
+                    alert('❌ ' + error.error);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Impossible d\'ajouter la catégorie');
+            }
+        }
+
+        async function addNewSubscription() {
+            const subName = prompt('Nom du nouvel abonnement :');
+            if (!subName || subName.trim() === '') return;
+
+            try {
+                const res = await fetch('/monetariat/api/subscriptions', {
+                    method:  'POST',
+                    headers: { 'Content-Type':  'application/json' },
+                    body: JSON.stringify({
+                        nom: subName.trim()
+                    })
+                });
+
+                if (res.ok) {
+                    const newSub = await res.json();
+                    subscriptions.push(newSub);
+                    populateSubscriptions();
+                    // Sélectionner le nouvel abonnement
+                    document.getElementById('abonnement').value = newSub.id;
+                } else {
+                    const error = await res.json();
+                    alert('❌ ' + error.error);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Impossible d\'ajouter l\'abonnement');
+            }
+        }
+
+        // Soumission du formulaire
+        document.getElementById('transactionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const type = document.getElementById('transactionType').value;
+            const data = {
+                date: document.getElementById('date').value,
+                compte_id: parseInt(document.getElementById('compte').value),
+                montant: parseFloat(document.getElementById('montant').value),
+                description: document.getElementById('description').value || null,
+                mode_paiement_id: parseInt(document.getElementById('modePaiement').value),
+                type: type
+            };
+
+            // Ajouter les champs selon le type
+            if (type === 'depense' || type === 'revenu') {
+                data.categorie_id = parseInt(document.getElementById('categorie').value);
+            }
+
+            if (type === 'depense') {
+                data.necessity_level = document.getElementById('necessityLevel').value;
+                data.necessite = document.getElementById('necessite').value || null;
+                
+                // Ajouter l'abonnement si la catégorie est Abonnement
+                const categorieSelect = document.getElementById('categorie');
+                const selectedText = categorieSelect.options[categorieSelect.selectedIndex]?.text;
+                if (selectedText === 'Abonnement') {
+                    const abonnementId = document.getElementById('abonnement').value;
+                    if (abonnementId) {
+                        data.subscription_id = parseInt(abonnementId);
+                    }
+                }
+            }
+
+            if (type === 'transfert') {
+                data.compte_destination_id = parseInt(document.getElementById('compteDestination').value);
+                
+                // Vérifier que les comptes sont différents
+                if (data.compte_id === data.compte_destination_id) {
+                    showError('Les comptes source et destination doivent être différents');
+                    return;
+                }
+            }
+
+            try {
+                const res = await fetch('/monetariat/api/transactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    showSuccess();
+                    document.getElementById('transactionForm').reset();
+                    document.getElementById('date').valueAsDate = new Date();
+                    document.getElementById('transactionType').value = 'depense';
+                    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector('[data-type="depense"]').classList.add('active');
+                    currentType = 'depense';
+                    updateFormForType('depense');
+                } else {
+                    showError('Erreur lors de l\'enregistrement');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showError('Impossible de se connecter au serveur');
             }
         });
+
+        function showSuccess() {
+            const msg = document.getElementById('successMessage');
+            msg.style.display = 'block';
+            window.scrollTo(0, 0);
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 3000);
+        }
+
+        function showError(text) {
+            const msg = document.getElementById('errorMessage');
+            msg.textContent = '❌ ' + text;
+            msg.style.display = 'block';
+            window.scrollTo(0, 0);
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 5000);
+        }
+
+        // Charger les données au démarrage
+        loadData();
     </script>
 </body>
 </html>
