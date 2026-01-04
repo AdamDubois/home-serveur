@@ -7,7 +7,9 @@ Port 5000 - Accessible via VPN WireGuard
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
+import secrets
 
 # Importer les routers des services
 from services.wifi import router as wifi_router
@@ -19,6 +21,10 @@ app = FastAPI(
     description="Serveur personnel - Monitoring & Services",
     version="1.0.0"
 )
+
+# Générer une clé secrète pour les sessions (à externaliser en production)
+SECRET_KEY = secrets.token_urlsafe(32)
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 # Inclure les routers des services
 app.include_router(wifi_router.router, prefix="/wifi", tags=["WiFi Monitor"])

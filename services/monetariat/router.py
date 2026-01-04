@@ -3,8 +3,8 @@
 Routes FastAPI pour Monétariat
 """
 
-from fastapi import APIRouter, Request, UploadFile, File
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+from fastapi import APIRouter, Request, UploadFile, File, Depends, Form
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from pydantic import BaseModel
@@ -14,6 +14,7 @@ import io
 from datetime import datetime
 
 from . import database as db
+from . import auth
 
 # Configuration
 router = APIRouter()
@@ -41,59 +42,94 @@ class NewTransaction(BaseModel):
     compte_destination_id:  Optional[int] = None
     subscription_id: Optional[int] = None
 
+# ============ AUTHENTICATION ROUTES ============
+
+@router.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """Page de connexion"""
+    # Si déjà authentifié, rediriger vers le dashboard
+    if auth.check_authentication(request):
+        return RedirectResponse(url="/monetariat/", status_code=302)
+    
+    html_path = BASE_DIR / "templates" / "monetariat" / "login.html"
+    return FileResponse(html_path)
+
+@router.post("/login")
+async def login(request: Request, password: str = Form(...)):
+    """Traitement de la connexion"""
+    # Vérifier le mot de passe
+    if auth.verify_password(password, auth.DEFAULT_PASSWORD_HASH):
+        # Créer la session
+        request.session["authenticated"] = True
+        return RedirectResponse(url="/monetariat/", status_code=302)
+    else:
+        # Mot de passe incorrect
+        return JSONResponse(
+            status_code=401,
+            content={"error": "Mot de passe incorrect"}
+        )
+
+@router.get("/logout")
+async def logout(request: Request):
+    """Déconnexion"""
+    request.session.clear()
+    return RedirectResponse(url="/monetariat/login", status_code=302)
+
+# ============ PROTECTED ROUTES ============
+
 @router.get("/", response_class=HTMLResponse)
-async def monetariat_dashboard(request: Request):
+async def monetariat_dashboard(request: Request, _: None = Depends(auth.require_authentication)):
     """Dashboard principal - Vue d'ensemble"""
     html_path = BASE_DIR / "templates" / "monetariat" / "dashboard.html"
     return FileResponse(html_path)
 
 @router.get("/form", response_class=HTMLResponse)
-async def monetariat_form(request: Request):
+async def monetariat_form(request: Request, _: None = Depends(auth.require_authentication)):
     """Formulaire d'ajout de transaction"""
     html_path = BASE_DIR / "templates" / "monetariat" / "form.html"
     return FileResponse(html_path)
 
 @router.get("/settings", response_class=HTMLResponse)
-async def monetariat_settings(request: Request):
+async def monetariat_settings(request: Request, _: None = Depends(auth.require_authentication)):
     """Page de paramètres des comptes"""
     html_path = BASE_DIR / "templates" / "monetariat" / "settings.html"
     return FileResponse(html_path)
 
 @router.get("/import", response_class=HTMLResponse)
-async def monetariat_import(request: Request):
+async def monetariat_import(request: Request, _: None = Depends(auth.require_authentication)):
     """Page d'import CSV"""
     html_path = BASE_DIR / "templates" / "monetariat" / "import.html"
     return FileResponse(html_path)
 
 @router.get("/compte/{account_id}", response_class=HTMLResponse)
-async def monetariat_compte(request: Request, account_id: int):
+async def monetariat_compte(request: Request, account_id: int, _: None = Depends(auth.require_authentication)):
     """Page des transactions d'un compte"""
     html_path = BASE_DIR / "templates" / "monetariat" / "compte.html"
     return FileResponse(html_path)
 
 # API Routes
 @router.get("/api/accounts")
-async def api_get_accounts():
+async def api_get_accounts(_: None = Depends(auth.require_authentication)):
     """Récupère tous les comptes"""
     return db.get_all_accounts()
 
 @router.get("/api/categories/{cat_type}")
-async def api_get_categories(cat_type: str):
+async def api_get_categories(cat_type: str, _: None = Depends(auth.require_authentication)):
     """Récupère les catégories par type (depense/revenu) triées avec Autres à la fin"""
     return db.get_categories_sorted(cat_type)
 
 @router.get("/api/payment-methods")
-async def api_get_payment_methods():
+async def api_get_payment_methods(_: None = Depends(auth.require_authentication)):
     """Récupère tous les modes de paiement"""
     return db.get_all_payment_methods()
 
 @router.get("/api/subscriptions")
-async def api_get_subscriptions():
+async def api_get_subscriptions(_: None = Depends(auth.require_authentication)):
     """Récupère tous les abonnements"""
     return db.get_all_subscriptions()
 
 @router.post("/api/categories")
-async def api_add_category(category: NewCategory):
+async def api_add_category(category: NewCategory, _: None = Depends(auth.require_authentication)):
     """Ajoute une nouvelle catégorie"""
     result = db.add_category(category.nom, category.type)
     if result:
@@ -105,7 +141,7 @@ async def api_add_category(category: NewCategory):
         )
 
 @router.post("/api/subscriptions")
-async def api_add_subscription(data: dict):
+async def api_add_subscription(data: dict, _: None = Depends(auth.require_authentication)):
     """Ajoute un nouvel abonnement"""
     result = db.add_subscription(data['nom'])
     if result:
@@ -117,7 +153,7 @@ async def api_add_subscription(data: dict):
         )
 
 @router.delete("/api/categories/{category_id}")
-async def api_delete_category(category_id:  int):
+async def api_delete_category(category_id:  int, _: None = Depends(auth.require_authentication)):
     """Supprime une catégorie"""
     result = db.delete_category(category_id)
     if 'error' in result:
@@ -125,7 +161,7 @@ async def api_delete_category(category_id:  int):
     return result
 
 @router.put("/api/categories/reorder")
-async def api_reorder_categories(data: dict):
+async def api_reorder_categories(data: dict, _: None = Depends(auth.require_authentication)):
     """Réordonne les catégories
     Attend un dict avec 'orders':  [{'id': 1, 'ordre': 0}, {'id': 2, 'ordre': 1}, ...]
     """
@@ -135,23 +171,23 @@ async def api_reorder_categories(data: dict):
     return result
 
 @router.post("/api/transactions")
-async def api_add_transaction(transaction:  NewTransaction):
+async def api_add_transaction(transaction:  NewTransaction, _: None = Depends(auth.require_authentication)):
     """Ajoute une nouvelle transaction"""
     transaction_id = db.add_transaction(transaction.dict())
     return {"id": transaction_id, "status": "success"}
 
 @router.get("/api/transactions")
-async def api_get_transactions(limit: int = 100):
+async def api_get_transactions(limit: int = 100, _: None = Depends(auth.require_authentication)):
     """Récupère toutes les transactions"""
     return db.get_all_transactions(limit)
 
 @router.get("/api/accounts/summary")
-async def api_get_account_summary():
+async def api_get_account_summary(_: None = Depends(auth.require_authentication)):
     """Récupère le résumé des comptes avec soldes calculés"""
     return db.get_account_summary()
 
 @router.put("/api/accounts/{account_id}/balance")
-async def api_update_account_balance(account_id:  int, data: dict):
+async def api_update_account_balance(account_id:  int, data: dict, _: None = Depends(auth.require_authentication)):
     """Met à jour le solde d'un compte"""
     result = db.update_account_balance(account_id, data['balance'])
     if 'error' in result:
@@ -159,7 +195,7 @@ async def api_update_account_balance(account_id:  int, data: dict):
     return result
 
 @router.put("/api/accounts/{account_id}/name")
-async def api_update_account_name(account_id:  int, data: dict):
+async def api_update_account_name(account_id:  int, data: dict, _: None = Depends(auth.require_authentication)):
     """Met à jour le nom d'un compte"""
     result = db.update_account_name(account_id, data['name'])
     if 'error' in result:
@@ -169,7 +205,7 @@ async def api_update_account_name(account_id:  int, data: dict):
 # ============ ROUTES IMPORT CSV ============
 
 @router.post("/api/import/parse")
-async def api_parse_csv(file: UploadFile = File(...)):
+async def api_parse_csv(file: UploadFile = File(...), _: None = Depends(auth.require_authentication)):
     """Parse un fichier CSV et retourne un aperçu des données"""
     try:
         # Lire le contenu du fichier
@@ -207,7 +243,7 @@ async def api_parse_csv(file: UploadFile = File(...)):
         )
 
 @router.post("/api/import/execute")
-async def api_execute_import(data: dict):
+async def api_execute_import(data: dict, _: None = Depends(auth.require_authentication)):
     """Exécute l'import des transactions depuis les données CSV mappées
     
     Attend:  

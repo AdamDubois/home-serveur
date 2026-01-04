@@ -66,6 +66,15 @@
             transform: translateY(-2px);
         }
 
+        .logout-btn {
+            background: rgba(220, 53, 69, 0.3);
+            border-color: rgba(220, 53, 69, 0.5);
+        }
+
+        .logout-btn:hover {
+            background: rgba(220, 53, 69, 0.5);
+        }
+
         .accounts-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -267,6 +276,7 @@
             <a href="/monetariat/form" class="nav-btn">➕ Nouvelle transaction</a>
             <a href="/monetariat/import" class="nav-btn">📥 Importer CSV</a>
             <a href="/monetariat/settings" class="nav-btn">⚙️ Paramètres</a>
+            <a href="/monetariat/logout" class="nav-btn logout-btn">🚪 Se déconnecter</a>
         </div>
 
         <div id="loading" class="loading">

@@ -65,6 +65,27 @@
             transform: translateX(-5px);
         }
 
+        .logout-link {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(220, 53, 69, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(220, 53, 69, 0.5);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .logout-link:hover {
+            background: rgba(220, 53, 69, 0.5);
+            transform: translateX(5px);
+        }
+
         .account-item {
             background: #f8f9fa;
             padding: 20px;
@@ -232,6 +253,7 @@
 </head>
 <body>
     <a href="/monetariat" class="back-link">← Retour au dashboard</a>
+    <a href="/monetariat/logout" class="logout-link">🚪 Se déconnecter</a>
 
     <div class="container">
         <div class="success-message" id="successMessage">✅ Modifications enregistrées !</div>
