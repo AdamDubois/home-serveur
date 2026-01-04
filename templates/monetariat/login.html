@@ -174,8 +174,8 @@
             <h2 class="card-title">🔐 Connexion</h2>
             <p class="card-subtitle">Entrez votre mot de passe pour accéder au système</p>
 
-            <div class="error-message" id="errorMessage">
-                ❌ Mot de passe incorrect. Veuillez réessayer.
+            <div class="error-message{% if error %} show{% endif %}" id="errorMessage">
+                ❌ {{ error if error else "Mot de passe incorrect. Veuillez réessayer." }}
             </div>
 
             <form id="loginForm" method="POST">
@@ -204,47 +204,8 @@
     </div>
 
     <script>
-        const form = document.getElementById('loginForm');
-        const errorMessage = document.getElementById('errorMessage');
         const passwordInput = document.getElementById('password');
-
-        // Afficher le message d'erreur si présent dans l'URL
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('error') === 'invalid') {
-            errorMessage.classList.add('show');
-            passwordInput.focus();
-        }
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            errorMessage.classList.remove('show');
-
-            const formData = new FormData(form);
-            
-            try {
-                const response = await fetch('/monetariat/login', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.redirected) {
-                    // Connexion réussie, redirection
-                    window.location.href = response.url;
-                } else if (response.status === 401) {
-                    // Mot de passe incorrect
-                    errorMessage.classList.add('show');
-                    passwordInput.value = '';
-                    passwordInput.focus();
-                } else {
-                    // Autre erreur
-                    errorMessage.textContent = '❌ Une erreur est survenue. Veuillez réessayer.';
-                    errorMessage.classList.add('show');
-                }
-            } catch (error) {
-                errorMessage.textContent = '❌ Erreur de connexion. Vérifiez votre connexion.';
-                errorMessage.classList.add('show');
-            }
-        });
+        const errorMessage = document.getElementById('errorMessage');
 
         // Masquer le message d'erreur quand l'utilisateur commence à taper
         passwordInput.addEventListener('input', () => {
